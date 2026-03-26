@@ -1,0 +1,87 @@
+{
+  "lastUpdated": "2026-03-25",
+  "totalGroups": 110,
+  "groupsPostedToday": 2,
+  "groupsPostedThisWeek": 18,
+  "rotationDay": 2,
+  "lastRunStatus": "PARTIAL",
+  "lastRunDate": "2026-03-24",
+  "commentsFound": 48,
+  "repliesSent": 35,
+  "replyRate": 97.9,
+  "lastCommentScan": "2026-03-23",
+  "niches": [
+    {
+      "name": "Landscaping",
+      "groups": 21
+    },
+    {
+      "name": "Detailing",
+      "groups": 9
+    },
+    {
+      "name": "Pressure Washing",
+      "groups": 8
+    },
+    {
+      "name": "Plumbing",
+      "groups": 6
+    },
+    {
+      "name": "Gutters",
+      "groups": 6
+    },
+    {
+      "name": "Roofing",
+      "groups": 6
+    },
+    {
+      "name": "Window Cleaning",
+      "groups": 5
+    },
+    {
+      "name": "HVAC",
+      "groups": 5
+    },
+    {
+      "name": "Painting",
+      "groups": 5
+    },
+    {
+      "name": "Junk Removal",
+      "groups": 5
+    }
+  ],
+  "recentPosts": [
+    {
+      "date": "2026-03-24",
+      "theme": "A",
+      "groupsPosted": 2,
+      "groupsPlanned": 16,
+      "status": "PARTIAL - Rate limited after 2 posts",
+      "copy": "Friend of mine runs a detail shop. Nothing fancy. Him and two guys.\n\nLast year he spent less than $5 per person who reached out from his ads. Got over a thousand inquiries in 11 months.\n\nClosed 341 jobs from it."
+    },
+    {
+      "date": "2026-03-23",
+      "theme": "A",
+      "groupsPosted": 16,
+      "groupsPlanned": 16,
+      "status": "SUCCESS",
+      "copy": "Had a pressure washing guy tell me last week he was doing fine with word of mouth..."
+    }
+  ],
+  "commentHighlights": [
+    {
+      "group": "Pressure Washing Business Owners",
+      "commenter": "John Jloc",
+      "comment": "So you sell ad campaigns then",
+      "status": "Replied"
+    },
+    {
+      "group": "Landscape Maintenance Company Owners",
+      "commenter": "Ryan Krajewski",
+      "comment": "facebook ads from a professional company",
+      "status": "Replied - corrected to LSA"
+    }
+  ]
+}

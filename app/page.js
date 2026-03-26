@@ -375,7 +375,7 @@ function Chat({ open, onClose }) {
 // PAGES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function DashboardPage({ PIPELINE = DEFAULT_PIPELINE, METRICS = DEFAULT_METRICS, CHANNELS = DEFAULT_CHANNELS, ACTIVITIES = DEFAULT_ACTIVITIES, KPIS = DEFAULT_KPIS, CAMPAIGNS_DATA = [], liveData }) {
+function DashboardPage({ PIPELINE = DEFAULT_PIPELINE, METRICS = DEFAULT_METRICS, CHANNELS = DEFAULT_CHANNELS, ACTIVITIES = DEFAULT_ACTIVITIES, KPIS = DEFAULT_KPIS, CAMPAIGNS_DATA = [], liveData, setPage }) {
   const pt = KPIS.totalPipeline || PIPELINE.reduce((a, b) => a + b.count, 0);
   const ts = KPIS.emailsSent7d || METRICS.reduce((a, b) => a + b.sent, 0);
   const openRate = KPIS.openRate || 0;
@@ -383,13 +383,32 @@ function DashboardPage({ PIPELINE = DEFAULT_PIPELINE, METRICS = DEFAULT_METRICS,
   const totalReplies = KPIS.totalReplies || 0;
   const activeCampaigns = KPIS.activeCampaigns || 0;
 
+  const ClickMetric = ({ label, value, change, up, icon: Icon, color, onClick, sub }) => (
+    <div onClick={onClick} style={{ ...glass.card, padding: 16, cursor: onClick ? "pointer" : "default", transition: "all 0.2s", position: "relative", overflow: "hidden" }}
+      onMouseEnter={e => onClick && (e.currentTarget.style.borderColor = `${color}44`)}
+      onMouseLeave={e => onClick && (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <p style={{ fontSize: 10, color: "#6B7280", margin: "0 0 6px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</p>
+          <p style={{ fontSize: 26, fontWeight: 700, color: "#fff", margin: 0, letterSpacing: "-1px" }}>{value}</p>
+          {change && <p style={{ fontSize: 10, color: up ? "#34D399" : "#F87171", margin: "4px 0 0", display: "flex", alignItems: "center", gap: 3 }}>{change}</p>}
+          {sub && <p style={{ fontSize: 9, color: "#4B5563", margin: "2px 0 0" }}>{sub}</p>}
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", color, flexShrink: 0 }}>
+          <Icon size={16} />
+        </div>
+      </div>
+      {onClick && <div style={{ position: "absolute", bottom: 6, right: 10, fontSize: 8, color: "#374151" }}>click to explore →</div>}
+    </div>
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-        <Metric label="Total Pipeline" value={pt.toLocaleString()} change={`${activeCampaigns} active`} up icon={Users} color="#6366F1" />
-        <Metric label="Emails Sent" value={ts.toLocaleString()} change="all time" up icon={Mail} color="#A855F7" />
-        <Metric label="Open Rate" value={`${openRate}%`} change={`${KPIS.totalOpens || 0} opens`} up icon={Eye} color="#10B981" />
-        <Metric label="Reply Rate" value={`${replyRate}%`} change={`${totalReplies} replies`} up={totalReplies > 0} icon={MessageSquare} color="#F59E0B" />
+        <ClickMetric label="Total Pipeline" value={pt.toLocaleString()} change={`${activeCampaigns} active campaigns`} up icon={Users} color="#6366F1" onClick={() => setPage?.("pipeline")} sub="Click to view leads" />
+        <ClickMetric label="Emails Sent" value={ts.toLocaleString()} change="all time" up icon={Mail} color="#A855F7" onClick={() => setPage?.("campaigns")} sub="Click to view campaigns" />
+        <ClickMetric label="Open Rate" value={`${openRate}%`} change={`${KPIS.totalOpens || 0} total opens`} up icon={Eye} color="#10B981" onClick={() => setPage?.("analytics")} sub="Click for analytics" />
+        <ClickMetric label="Reply Rate" value={`${replyRate}%`} change={`${totalReplies} replies`} up={totalReplies > 0} icon={MessageSquare} color="#F59E0B" onClick={() => setPage?.("outreach")} sub="Click for outreach log" />
       </div>
 
       <GlassCard className="p-5">
@@ -419,7 +438,9 @@ function DashboardPage({ PIPELINE = DEFAULT_PIPELINE, METRICS = DEFAULT_METRICS,
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <GlassCard className="p-5">
-          <Header title="Pipeline Funnel" sub={`${pt} total leads`} />
+          <Header title="Pipeline Funnel" sub={`${pt.toLocaleString()} total leads`} action={
+            <button onClick={() => setPage?.("pipeline")} style={{ fontSize: 9, color: "#818CF8", background: "none", border: "none", cursor: "pointer", padding: "2px 6px", borderRadius: 4, background: "rgba(99,102,241,0.1)" }}>View all →</button>
+          } />
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {PIPELINE.map(s => (
               <div key={s.status} style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -434,6 +455,34 @@ function DashboardPage({ PIPELINE = DEFAULT_PIPELINE, METRICS = DEFAULT_METRICS,
           </div>
         </GlassCard>
 
+        <GlassCard className="p-5">
+          <Header title="Channels This Week" sub="Active outreach breakdown" action={
+            <button onClick={() => setPage?.("operations")} style={{ fontSize: 9, color: "#818CF8", background: "rgba(99,102,241,0.1)", border: "none", cursor: "pointer", padding: "2px 6px", borderRadius: 4 }}>Operations →</button>
+          } />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { label: "Cold Email", val: ts, sub: `${openRate}% open · ${replyRate}% reply`, color: "#6366F1", icon: Mail, page: "campaigns" },
+              { label: "LinkedIn Outreach", val: "33 sent", sub: "6 accepted · 18.2% acceptance", color: "#0A66C2", icon: Linkedin, page: "pipeline" },
+              { label: "Facebook Groups", val: "110 groups", sub: "18 posted this week · 35 replies", color: "#1877F2", icon: Facebook, page: "operations" },
+            ].map(c => (
+              <div key={c.label} onClick={() => setPage?.(c.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "background 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: `${c.color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <c.icon size={13} style={{ color: c.color }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "#fff", fontWeight: 500 }}>{c.label}</div>
+                  <div style={{ fontSize: 9, color: "#4B5563" }}>{c.sub}</div>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: c.color }}>{c.val}</div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <GlassCard className="p-5">
           <Header title="Recent Activity" sub="Latest actions by Elliott" />
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -461,40 +510,70 @@ function PipelinePage() {
   const [selectedIdx, setSelectedIdx] = useState(null);
 
   useEffect(() => {
-    fetch('/leads.json')
-      .then(r => r.json())
-      .then(data => {
-        if (data.leads && data.leads.length > 0) {
-          const hotLeads = LEADS.filter(l => ["Interested","Discovery Call","Replied"].includes(l.status));
-          const hotCompanies = new Set(hotLeads.map(l => (l.company||"").toLowerCase()));
-          const realLeads = data.leads
-            .filter(l => !hotCompanies.has((l.company||"").toLowerCase()))
-            .map(l => ({
-              company: l.company, contact: l.fullName,
-              industry: l.industry || "", state: l.state || "",
-              city: l.city || "", fullState: l.state || "",
-              status: l.status || "Contacted", source: l.source || "Cold Email",
-              last: "Contacted", email: l.email, phone: l.phone,
-              title: l.title, linkedin: l.linkedin, website: l.website,
-              campaign: l.campaign,
-            }));
-          setAllLeads([...hotLeads, ...realLeads]);
+    const loadLeads = async () => {
+      try {
+        // Load cold email leads + LinkedIn leads in parallel
+        const [emailRes, liRes] = await Promise.allSettled([
+          fetch('/leads.json'),
+          fetch('/linkedin-leads.json'),
+        ]);
+
+        const hotLeads = LEADS.filter(l => ["Interested","Discovery Call","Replied"].includes(l.status));
+        const hotCompanies = new Set(hotLeads.map(l => (l.company||"").toLowerCase()));
+        let combined = [...hotLeads];
+
+        if (emailRes.status === "fulfilled" && emailRes.value.ok) {
+          const data = await emailRes.value.json();
+          if (data.leads?.length > 0) {
+            const emailLeads = data.leads
+              .filter(l => !hotCompanies.has((l.company||"").toLowerCase()))
+              .map(l => ({
+                company: l.company, contact: l.fullName,
+                industry: l.industry || "", state: l.state || "",
+                city: l.city || "", status: l.status || "Contacted",
+                source: l.source || "Cold Email", last: "Contacted",
+                email: l.email, phone: l.phone, title: l.title,
+                linkedin: l.linkedin, website: l.website, campaign: l.campaign,
+              }));
+            combined = [...combined, ...emailLeads];
+          }
         }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+
+        if (liRes.status === "fulfilled" && liRes.value.ok) {
+          const data = await liRes.value.json();
+          if (data.leads?.length > 0) {
+            const liCompanies = new Set(combined.map(l => (l.company||"").toLowerCase()));
+            const liLeads = data.leads
+              .filter(l => !liCompanies.has((l.company||"").toLowerCase()))
+              .map(l => ({
+                company: l.company, contact: l.name,
+                industry: "", state: "", title: l.title,
+                status: "New Lead", source: "LinkedIn",
+                last: "Apollo", linkedin: l.linkedin,
+              }));
+            combined = [...combined, ...liLeads];
+          }
+        }
+
+        setAllLeads(combined);
+      } catch (e) { console.error("Lead load error:", e); }
+      finally { setLoading(false); }
+    };
+    loadLeads();
   }, []);
 
   const hotCount = allLeads.filter(l => ["Interested","Discovery Call","Replied"].includes(l.status)).length;
   const emailCount = allLeads.filter(l => l.source === "Cold Email").length;
   const linkedinCount = allLeads.filter(l => l.source === "LinkedIn").length;
+  const fbCount = allLeads.filter(l => l.source === "Facebook").length;
 
   const visible = allLeads.filter(l => {
     const matchFilter =
       filter === "all" ||
       (filter === "hot" && ["Interested","Discovery Call","Replied"].includes(l.status)) ||
       (filter === "email" && l.source === "Cold Email") ||
-      (filter === "linkedin" && l.source === "LinkedIn");
+      (filter === "linkedin" && l.source === "LinkedIn") ||
+      (filter === "facebook" && l.source === "Facebook");
     const q = search.toLowerCase();
     const matchSearch = !q ||
       (l.company||"").toLowerCase().includes(q) ||
@@ -510,6 +589,7 @@ function PipelinePage() {
     { id: "hot", label: `🔥 Hot (${hotCount})` },
     { id: "email", label: `Email (${emailCount.toLocaleString()})` },
     { id: "linkedin", label: `LinkedIn (${linkedinCount.toLocaleString()})` },
+    ...(fbCount > 0 ? [{ id: "facebook", label: `Facebook (${fbCount})` }] : []),
   ];
 
   return (
@@ -817,25 +897,62 @@ const OpsChannelIcon = ({ channel }) => {
 function OperationsHubPage({ PIPELINE, METRICS, CHANNELS, ACTIVITIES, KPIS, CAMPAIGNS_DATA, liveData }) {
   const [opsData, setOpsData] = useState(null);
   const [opsLoading, setOpsLoading] = useState(true);
+  const [fbOps, setFbOps] = useState(null);
+  const [liOutreach, setLiOutreach] = useState(null);
+  const [liTab, setLiTab] = useState("stats"); // "stats" | "contacts"
+  const [fbTab, setFbTab] = useState("stats"); // "stats" | "posts"
 
   useEffect(() => {
-    const fetchOpsData = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await fetch("/api/operations");
-        if (res.ok) { const data = await res.json(); setOpsData(data); }
-      } catch (err) { console.error("Failed to fetch operations data:", err); }
+        const [opsRes, fbRes, liRes] = await Promise.allSettled([
+          fetch("/api/operations"),
+          fetch("/facebook-ops.json"),
+          fetch("/linkedin-outreach.json"),
+        ]);
+        if (opsRes.status === "fulfilled" && opsRes.value.ok) setOpsData(await opsRes.value.json());
+        if (fbRes.status === "fulfilled" && fbRes.value.ok) setFbOps(await fbRes.value.json());
+        if (liRes.status === "fulfilled" && liRes.value.ok) setLiOutreach(await liRes.value.json());
+      } catch (err) { console.error("Ops fetch error:", err); }
       finally { setOpsLoading(false); }
     };
-    fetchOpsData();
-    const interval = setInterval(fetchOpsData, 120000);
+    fetchAll();
+    const interval = setInterval(fetchAll, 1800000);
     return () => clearInterval(interval);
   }, []);
 
   const urgentItems = opsData?.urgent || [];
   const taskExecutions = opsData?.taskHistory || [];
   const systemHealth = opsData?.health || {};
-  const linkedinData = opsData?.linkedin || {};
-  const facebookData = opsData?.facebook || {};
+  // Merge Notion LinkedIn data with local outreach CSV data
+  const linkedinData = {
+    requestsSent: liOutreach?.totalSent || opsData?.linkedin?.requestsSent || 0,
+    acceptances: liOutreach?.accepted || opsData?.linkedin?.acceptances || 0,
+    pending: liOutreach?.pending || 0,
+    followUpSent: liOutreach?.followUpSent || 0,
+    acceptanceRate: liOutreach?.acceptanceRate || 0,
+    replies: opsData?.linkedin?.replies || 0,
+    hotLeads: opsData?.linkedin?.hotLeads || 0,
+    lastRun: opsData?.linkedin?.lastRun || liOutreach?.lastUpdated,
+    contacts: liOutreach?.contacts || [],
+  };
+  // Merge Notion Facebook data with local ops JSON
+  const facebookData = {
+    postsMade: fbOps?.groupsPostedToday || opsData?.facebook?.postsMade || 0,
+    groupsTotal: fbOps?.totalGroups || 110,
+    groupsPostedWeek: fbOps?.groupsPostedThisWeek || 0,
+    rotationDay: fbOps?.rotationDay || 1,
+    commentsFound: fbOps?.commentsFound || 0,
+    commentsReplied: fbOps?.commentsReplied || opsData?.facebook?.commentsReplied || 0,
+    replyRate: fbOps?.replyRate || 0,
+    lastRunStatus: fbOps?.lastRunStatus || "Unknown",
+    lastRunDate: fbOps?.lastRunDate || null,
+    recentPosts: fbOps?.recentPosts || [],
+    commentHighlights: fbOps?.commentHighlights || [],
+    urgentCount: opsData?.facebook?.urgentCount || 0,
+    lastPostRun: opsData?.facebook?.lastPostRun || fbOps?.lastRunDate,
+    lastCommentRun: opsData?.facebook?.lastCommentRun || fbOps?.lastCommentScan,
+  };
   const emailData = opsData?.email || liveData?.kpis || {};
 
   const getHealthColor = (h) => h === "healthy" ? "#10B981" : h === "warning" ? "#F59E0B" : "#EF4444";
@@ -892,71 +1009,136 @@ function OperationsHubPage({ PIPELINE, METRICS, CHANNELS, ACTIVITIES, KPIS, CAMP
       )}
 
       {/* CHANNEL STATUS CARDS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-        {/* LinkedIn */}
-        <GlassCard hover><div style={{ padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(10,102,194,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#0A66C2", fontSize: 14, fontWeight: 600 }}>in</div>
-            <div><h3 style={{ fontSize: 12, fontWeight: 600, color: "#fff", margin: 0 }}>LinkedIn</h3><p style={{ fontSize: 9, color: "#4B5563", margin: "2px 0 0" }}>Connection activity</p></div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Requests Sent</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#0A66C2" }}>{linkedinData.requestsSent || 0}</div>
-              <div style={{ fontSize: 8, color: "#4B5563", marginTop: 2 }}>today</div>
-            </div>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Acceptances</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#10B981" }}>{linkedinData.acceptances || 0}</div>
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Replies</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#818CF8" }}>{linkedinData.replies || 0}</div>
-            </div>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Hot Leads</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#F59E0B" }}>{linkedinData.hotLeads || 0}</div>
-            </div>
-          </div>
-          <div style={{ fontSize: 9, color: "#4B5563", paddingTop: 8, marginTop: 12, borderTop: "1px solid rgba(255,255,255,0.04)" }}>Last run: {fmtTime(linkedinData.lastRun)}</div>
-        </div></GlassCard>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
 
-        {/* Facebook */}
-        <GlassCard hover><div style={{ padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(24,119,242,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1877F2", fontSize: 14, fontWeight: 600 }}>f</div>
-            <div><h3 style={{ fontSize: 12, fontWeight: 600, color: "#fff", margin: 0 }}>Facebook</h3><p style={{ fontSize: 9, color: "#4B5563", margin: "2px 0 0" }}>Posts & engagement</p></div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Posts Today</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#1877F2" }}>{facebookData.postsMade || 0}/{facebookData.groupsPosted || 0}</div>
+        {/* LinkedIn — rich card with tab toggle */}
+        <GlassCard><div style={{ padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(10,102,194,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#0A66C2", fontSize: 14, fontWeight: 600 }}>in</div>
+              <div><h3 style={{ fontSize: 12, fontWeight: 600, color: "#fff", margin: 0 }}>LinkedIn Outreach</h3><p style={{ fontSize: 9, color: "#4B5563", margin: "2px 0 0" }}>Connection campaign</p></div>
             </div>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Comments Replied</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#10B981" }}>{facebookData.commentsReplied || 0}</div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["stats","contacts"].map(t => (
+                <button key={t} onClick={() => setLiTab(t)} style={{ padding: "3px 8px", borderRadius: 6, fontSize: 9, border: "1px solid rgba(255,255,255,0.08)", background: liTab === t ? "rgba(10,102,194,0.2)" : "transparent", color: liTab === t ? "#60A5FA" : "#4B5563", cursor: "pointer", fontWeight: liTab === t ? 600 : 400 }}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+              ))}
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Interests</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#A855F7" }}>{facebookData.interests || 0}</div>
+
+          {liTab === "stats" ? (<>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
+              {[
+                { label: "Requests Sent", val: linkedinData.requestsSent, color: "#0A66C2" },
+                { label: "Accepted", val: linkedinData.acceptances, color: "#10B981" },
+                { label: "Pending", val: linkedinData.pending, color: "#F59E0B" },
+                { label: "Follow-ups", val: linkedinData.followUpSent, color: "#818CF8" },
+              ].map(m => (
+                <div key={m.label} style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: 8, textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: m.color }}>{m.val}</div>
+                  <div style={{ fontSize: 8, color: "#4B5563", marginTop: 2 }}>{m.label}</div>
+                </div>
+              ))}
             </div>
-            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: 10 }}>
-              <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Messages</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#F59E0B" }}>{facebookData.messages || 0}</div>
+            <div style={{ background: "rgba(10,102,194,0.08)", borderRadius: 10, padding: "8px 12px", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 10, color: "#93C5FD" }}>Acceptance Rate</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#60A5FA" }}>{linkedinData.acceptanceRate}%</span>
+              </div>
+              <div style={{ marginTop: 6, height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2 }}>
+                <div style={{ height: "100%", width: `${Math.min(linkedinData.acceptanceRate, 100)}%`, background: "#0A66C2", borderRadius: 2, transition: "width 0.5s ease" }} />
+              </div>
             </div>
-          </div>
-          {(facebookData.urgentCount || 0) > 0 && (
-            <div style={{ background: "rgba(239,68,68,0.15)", borderRadius: 8, padding: 8, marginBottom: 8 }}>
-              <div style={{ fontSize: 10, color: "#F87171", fontWeight: 500 }}>{facebookData.urgentCount} urgent items from Facebook</div>
+          </>) : (
+            <div style={{ maxHeight: 200, overflowY: "auto" }}>
+              {linkedinData.contacts.slice(0, 20).map((c, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: c.accepted ? "#10B981" : "#F59E0B", flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 10, color: "#fff", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                    <div style={{ fontSize: 9, color: "#4B5563", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.company}</div>
+                  </div>
+                  <Badge color={c.accepted ? "green" : "yellow"}>{c.accepted ? "Accepted" : "Pending"}</Badge>
+                </div>
+              ))}
+              {linkedinData.contacts.length > 20 && <div style={{ fontSize: 9, color: "#4B5563", paddingTop: 6 }}>+{linkedinData.contacts.length - 20} more in Leads</div>}
             </div>
           )}
-          <div style={{ fontSize: 8, color: "#4B5563", display: "flex", flexDirection: "column", gap: 2, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-            <div>Last post: {fmtTime(facebookData.lastPostRun)}</div>
-            <div>Last reply: {fmtTime(facebookData.lastCommentRun)}</div>
+          <div style={{ fontSize: 8, color: "#4B5563", marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.04)" }}>Last updated: {linkedinData.lastRun || "—"}</div>
+        </div></GlassCard>
+
+        {/* Facebook — rich card with tab toggle */}
+        <GlassCard><div style={{ padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(24,119,242,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1877F2", fontSize: 14, fontWeight: 600 }}>f</div>
+              <div>
+                <h3 style={{ fontSize: 12, fontWeight: 600, color: "#fff", margin: 0 }}>Facebook Groups</h3>
+                <p style={{ fontSize: 9, color: "#4B5563", margin: "2px 0 0" }}>
+                  {facebookData.groupsTotal} groups · Rotation Day {facebookData.rotationDay}/7
+                  {facebookData.lastRunStatus === "PARTIAL" && <span style={{ color: "#F59E0B", marginLeft: 6 }}>⚠ Partial run</span>}
+                  {facebookData.lastRunStatus === "SUCCESS" && <span style={{ color: "#10B981", marginLeft: 6 }}>✓ Success</span>}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["stats","posts"].map(t => (
+                <button key={t} onClick={() => setFbTab(t)} style={{ padding: "3px 8px", borderRadius: 6, fontSize: 9, border: "1px solid rgba(255,255,255,0.08)", background: fbTab === t ? "rgba(24,119,242,0.2)" : "transparent", color: fbTab === t ? "#93C5FD" : "#4B5563", cursor: "pointer", fontWeight: fbTab === t ? 600 : 400 }}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+              ))}
+            </div>
+          </div>
+
+          {fbTab === "stats" ? (<>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 }}>
+              {[
+                { label: "Posted Today", val: facebookData.postsMade, sub: "of 16 planned", color: "#1877F2" },
+                { label: "This Week", val: facebookData.groupsPostedWeek, sub: "groups reached", color: "#10B981" },
+                { label: "Comments Found", val: facebookData.commentsFound, sub: "last scan", color: "#A855F7" },
+              ].map(m => (
+                <div key={m.label} style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: 8, textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: m.color }}>{m.val}</div>
+                  <div style={{ fontSize: 8, color: "#4B5563", marginTop: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 7, color: "#374151" }}>{m.sub}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+              <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: 8 }}>
+                <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Replies Sent</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#34D399" }}>{facebookData.commentsReplied}</div>
+                <div style={{ fontSize: 8, color: "#4B5563" }}>{facebookData.replyRate}% reply rate</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: 8 }}>
+                <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 4 }}>Groups Coverage</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#F59E0B" }}>{Math.round(((facebookData.groupsPostedWeek||0)/facebookData.groupsTotal)*100)}%</div>
+                <div style={{ fontSize: 8, color: "#4B5563" }}>of 110 this week</div>
+              </div>
+            </div>
+            {facebookData.commentHighlights.length > 0 && (
+              <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: 10 }}>
+                <div style={{ fontSize: 9, color: "#4B5563", marginBottom: 6 }}>Recent Engagement</div>
+                {facebookData.commentHighlights.map((c, i) => (
+                  <div key={i} style={{ fontSize: 9, color: "#9CA3AF", marginBottom: 4, paddingBottom: 4, borderBottom: i < facebookData.commentHighlights.length-1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
+                    <span style={{ color: "#fff" }}>{c.commenter}</span> in {c.group} — <span style={{ color: "#34D399" }}>{c.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>) : (
+            <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+              {facebookData.recentPosts.map((p, i) => (
+                <div key={i} style={{ background: "rgba(255,255,255,0.02)", borderRadius: 10, padding: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontSize: 9, color: "#60A5FA", fontWeight: 500 }}>{p.date} · Theme {p.theme}</span>
+                    <Badge color={p.status === "SUCCESS" ? "green" : "yellow"}>{p.groupsPosted}/{p.groupsPlanned} groups</Badge>
+                  </div>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>{p.copy}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ fontSize: 8, color: "#4B5563", marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 12 }}>
+            <span>Last post: {facebookData.lastRunDate || "—"}</span>
+            <span>Last reply scan: {facebookData.lastCommentRun || "—"}</span>
           </div>
         </div></GlassCard>
 
@@ -1283,7 +1465,7 @@ export default function NovароHQ() {
         </div>
 
         <div style={{ padding: "20px 24px" }}>
-          <Page liveData={liveData} PIPELINE={PIPELINE} METRICS={METRICS} CHANNELS={CHANNELS} ACTIVITIES={ACTIVITIES} KPIS={KPIS} CAMPAIGNS_DATA={CAMPAIGNS_DATA} syncing={syncing} lastSync={lastSync} />
+          <Page liveData={liveData} PIPELINE={PIPELINE} METRICS={METRICS} CHANNELS={CHANNELS} ACTIVITIES={ACTIVITIES} KPIS={KPIS} CAMPAIGNS_DATA={CAMPAIGNS_DATA} syncing={syncing} lastSync={lastSync} setPage={setPage} />
         </div>
 
         <div style={{ textAlign: "center", padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.02)" }}>
